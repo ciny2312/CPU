@@ -1,0 +1,9 @@
+testspace/
+testcase
+!.keep
+*.o
+*.vcd
+*.elf
+*.dump
+*.data
+fpga/fpga
