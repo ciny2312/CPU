@@ -7,3 +7,4 @@ testcase
 *.dump
 *.data
 fpga/fpga
+*.png
