@@ -95,7 +95,7 @@ module ReservationStaion #(
                                               (!inst_valid & shotable) ? size - 1 : size;
     wire next_full = next_size == RS_SIZE;
 
-    scalar_alu alu (
+    alu alu (
         .clk_in(clk_in),
         .rst_in(rst_in),
         .rdy_in(rdy_in),

@@ -31,22 +31,22 @@ module cpu (
 
     wire [                 4 : 0] set_reg_id;
     wire [                31 : 0] set_val;
-    wire [`ROB_WIDTH_BIT - 1 : 0] set_reg_on_rob_id;
+    wire [`ROB_BIT - 1 : 0] set_reg_on_rob_id;
     wire [                 4 : 0] set_dep_reg_id;
-    wire [`ROB_WIDTH_BIT - 1 : 0] set_dep_rob_id;
+    wire [`ROB_BIT - 1 : 0] set_dep_rob_id;
     wire [                 4 : 0] get_id1;
     wire [                31 : 0] get_val1;
     wire                          get_has_dep1;
-    wire [`ROB_WIDTH_BIT - 1 : 0] get_dep1;
+    wire [`ROB_BIT - 1 : 0] get_dep1;
     wire [                 4 : 0] get_id2;
     wire [                31 : 0] get_val2;
     wire                          get_has_dep2;
-    wire [`ROB_WIDTH_BIT - 1 : 0] get_dep2;
+    wire [`ROB_BIT - 1 : 0] get_dep2;
 
-    wire [`ROB_WIDTH_BIT - 1 : 0] get_rob_id1;
+    wire [`ROB_BIT - 1 : 0] get_rob_id1;
     wire                          rob_value1_ready;
     wire [                  31:0] rob_value1;
-    wire [`ROB_WIDTH_BIT - 1 : 0] get_rob_id2;
+    wire [`ROB_BIT - 1 : 0] get_rob_id2;
     wire                          rob_value2_ready;
     wire [                  31:0] rob_value2;
     wire                          rob_clear;
@@ -95,6 +95,9 @@ module cpu (
     wire [31 : 0] lsb2cache_value;
     wire          cache2lsb_ready;
     wire [31 : 0] cache2lsb_res;
+//    initial begin
+//        $display("here");
+//    end
 
     Cache cache (
         .clk_in(clk_in),
@@ -153,7 +156,7 @@ module cpu (
 
     // from ReorderBuffer
     wire                          rob_full;
-    wire [`ROB_WIDTH_BIT - 1 : 0] rob_id_tail;
+    wire [`ROB_BIT - 1 : 0] rob_id_tail;
     // Decoder to ReorderBuffer
     wire                          dc2rob_valid;
     wire [ `ROB_TYPE_BIT - 1 : 0] dc2rob_type;
@@ -170,11 +173,11 @@ module cpu (
     wire [  `RS_TYPE_BIT - 1 : 0] dc2rs_type;
     wire [                31 : 0] dc2rs_r1;
     wire [                31 : 0] dc2rs_r2;
-    wire [`ROB_WIDTH_BIT - 1 : 0] dc2rs_dep1;
-    wire [`ROB_WIDTH_BIT - 1 : 0] dc2rs_dep2;
+    wire [`ROB_BIT - 1 : 0] dc2rs_dep1;
+    wire [`ROB_BIT - 1 : 0] dc2rs_dep2;
     wire                          dc2rs_has_dep1;
     wire                          dc2rs_has_dep2;
-    wire [`ROB_WIDTH_BIT - 1 : 0] dc2rs_rob_id;
+    wire [`ROB_BIT - 1 : 0] dc2rs_rob_id;
 
     // from LoadStoreBuffer
     wire                          lsb_full;
@@ -183,12 +186,12 @@ module cpu (
     wire [  `LS_TYPE_BIT - 1 : 0] dc2lsb_type;
     wire [                31 : 0] dc2lsb_r1;
     wire [                31 : 0] dc2lsb_r2;
-    wire [`ROB_WIDTH_BIT - 1 : 0] dc2lsb_dep1;
-    wire [`ROB_WIDTH_BIT - 1 : 0] dc2lsb_dep2;
+    wire [`ROB_BIT - 1 : 0] dc2lsb_dep1;
+    wire [`ROB_BIT - 1 : 0] dc2lsb_dep2;
     wire                          dc2lsb_has_dep1;
     wire                          dc2lsb_has_dep2;
     wire [                11 : 0] dc2lsb_offset;
-    wire [`ROB_WIDTH_BIT - 1 : 0] dc2lsb_rob_id;
+    wire [`ROB_BIT - 1 : 0] dc2lsb_rob_id;
 
     Decoder decoder (
         .clk_in(clk_in),
@@ -241,23 +244,22 @@ module cpu (
         .lsb_offset  (dc2lsb_offset),
         .lsb_rob_id  (dc2lsb_rob_id),
 
-        .if_stall   (dc2if_stall),
-        .if_clear   (dc2if_clear),
-        .if_set_addr(dc2if_new_pc)
+        .ins_fet_stall   (dc2if_stall),
+        .ins_fet_clear   (dc2if_clear),
+        .ins_fet_set_addr(dc2if_new_pc)
     );
-
 
     // from ReorderBuffer
     wire                          rob_empty;
-    wire [`ROB_WIDTH_BIT - 1 : 0] rob_id_head;
+    wire [`ROB_BIT - 1 : 0] rob_id_head;
 
     // output of LoadStoreBuffer
     wire                          lsb_ready;
-    wire [`ROB_WIDTH_BIT - 1 : 0] lsb_rob_id;
+    wire [`ROB_BIT - 1 : 0] lsb_rob_id;
     wire [                31 : 0] lsb_value;
     // output of ReservationStation
     wire                          rs_ready;
-    wire [`ROB_WIDTH_BIT - 1 : 0] rs_rob_id;
+    wire [`ROB_BIT - 1 : 0] rs_rob_id;
     wire [                31 : 0] rs_value;
 
     ReservationStaion rs (
@@ -294,22 +296,22 @@ module cpu (
         .inst_type    (dc2lsb_type),
         .inst_r1      (dc2lsb_r1),
         .inst_r2      (dc2lsb_r2),
-        .inst_dep1    (dc2lsb_dep1),
-        .inst_dep2    (dc2lsb_dep2),
-        .inst_has_dep1(dc2lsb_has_dep1),
-        .inst_has_dep2(dc2lsb_has_dep2),
+        .ins_dep_1    (dc2lsb_dep1),
+        .ins_dep_2    (dc2lsb_dep2),
+        .ins_has_dep1(dc2lsb_has_dep1),
+        .ins_has_dep2(dc2lsb_has_dep2),
         .inst_offset  (dc2lsb_offset),
         .inst_rob_id  (dc2lsb_rob_id),
 
         .full(lsb_full),
 
-        .cache_valid(lsb2cache_valid),
-        .cache_wr   (lsb2cache_wr),
-        .cache_size (lsb2cache_size),
-        .cache_addr (lsb2cache_addr),
-        .cache_value(lsb2cache_value),
-        .cache_ready(cache2lsb_ready),
-        .cache_res  (cache2lsb_res),
+        .c_valid(lsb2cache_valid),
+        .c_wr   (lsb2cache_wr),
+        .c_size (lsb2cache_size),
+        .c_addr (lsb2cache_addr),
+        .c_value(lsb2cache_value),
+        .c_ready(cache2lsb_ready),
+        .c_res  (cache2lsb_res),
 
         .rob_empty  (rob_empty),
         .rob_id_head(rob_id_head),
@@ -364,16 +366,6 @@ module cpu (
         .clear (rob_clear),
         .new_pc(rob2if_new_pc)
 
-        // .count_finished(dbgreg_dout[15:0])
     );
 
-    // assign dbgreg_dout[16] = rob_full;
-    // assign dbgreg_dout[17] = rs_full;
-    // assign dbgreg_dout[18] = lsb_full;
-    // assign dbgreg_dout[19] = rob_clear;
-    // assign dbgreg_dout[20] = dc2if_stall;
-    // assign dbgreg_dout[21] = dc2if_clear;
-    // assign dbgreg_dout[22] = set_reg_id != 0;
-    // assign dbgreg_dout[23] = mem_wr;
-    // assign dbgreg_dout[31:24] = 0;
 endmodule

@@ -3,9 +3,9 @@
 module ReorderBuffer #(
     parameter ROB_SIZE_BIT = `ROB_BIT
 ) (
-    input wire clk_in,  // system clock signal
-    input wire rst_in,  // reset signal
-    input wire rdy_in,  // ready signal, pause cpu when low
+    input wire clk_in,
+    input wire rst_in,
+    input wire rdy_in,
 
     // from decoder
     input wire                         inst_valid,
@@ -58,6 +58,7 @@ module ReorderBuffer #(
 
     localparam TypeRg = `ROB_TYPE_RG;
     localparam TypeSt = `ROB_TYPE_ST;
+    
     localparam TypeBr = `ROB_TYPE_BR;
     localparam TypeEx = `ROB_TYPE_EX;
 
@@ -71,6 +72,26 @@ module ReorderBuffer #(
 
     reg [ROB_SIZE_BIT - 1:0] head, tail;
 
+    assign full = (head == tail && busy[head]) || (tail + `ROB_BIT'b1 == head && inst_valid && !ready[head]);
+    assign empty = head == tail && !busy[head];
+
+    assign rob_id_head = head;
+    assign rob_id_tail = tail;
+
+    wire need_set_reg = (rdy_in && busy[head] && ready[head] && work_type[head] == TypeRg);
+    assign set_reg_id = need_set_reg ? rd[head] : 0;
+    assign set_reg_on_rob_id = need_set_reg ? head : 0;
+    assign set_val = need_set_reg ? value[head] : 0;
+
+    wire need_set_dep = rdy_in && inst_valid && inst_type == TypeRg;
+    assign set_dep_reg_id = need_set_dep ? inst_rd : 0;
+    assign set_dep_rob_id = need_set_dep ? tail : 0;
+
+    assign rob_value1_ready = ready[get_rob_id1] || (rs_ready && rs_rob_id == get_rob_id1) || (lsb_ready && lsb_rob_id == get_rob_id1) || (inst_valid && inst_ready && tail == get_rob_id1);
+    assign rob_value1 = ready[get_rob_id1] ? value[get_rob_id1] : (rs_ready && rs_rob_id == get_rob_id1) ? rs_value : (lsb_ready && lsb_rob_id == get_rob_id1) ? lsb_value : inst_value;
+    assign rob_value2_ready = ready[get_rob_id2] || (rs_ready && rs_rob_id == get_rob_id2) || (lsb_ready && lsb_rob_id == get_rob_id2) || (inst_valid && inst_ready && tail == get_rob_id2);
+    assign rob_value2 = ready[get_rob_id2] ? value[get_rob_id2] : (rs_ready && rs_rob_id == get_rob_id2) ? rs_value : (lsb_ready && lsb_rob_id == get_rob_id2) ? lsb_value : inst_value;
+    
     integer i;
     always @(posedge clk_in) begin
         if (rst_in) begin
@@ -121,10 +142,8 @@ module ReorderBuffer #(
                 ready[head] <= 0;
                 case (work_type[head])
                     TypeRg: begin
-                        // things are done by wire
                     end
                     TypeSt: begin
-                        // do nothing
                     end
                     TypeBr: begin
                         if (value[head][0] ^ jump_addr[head][0]) begin
@@ -137,23 +156,4 @@ module ReorderBuffer #(
         end
     end
 
-    assign full = (head == tail && busy[head]) || (tail + `ROB_BIT'b1 == head && inst_valid && !ready[head]);
-    assign empty = head == tail && !busy[head];
-
-    assign rob_id_head = head;
-    assign rob_id_tail = tail;
-
-    wire need_set_reg = (rdy_in && busy[head] && ready[head] && work_type[head] == TypeRg);
-    assign set_reg_id = need_set_reg ? rd[head] : 0;
-    assign set_reg_on_rob_id = need_set_reg ? head : 0;
-    assign set_val = need_set_reg ? value[head] : 0;
-
-    wire need_set_dep = rdy_in && inst_valid && inst_type == TypeRg;
-    assign set_dep_reg_id = need_set_dep ? inst_rd : 0;
-    assign set_dep_rob_id = need_set_dep ? tail : 0;
-
-    assign rob_value1_ready = ready[get_rob_id1] || (rs_ready && rs_rob_id == get_rob_id1) || (lsb_ready && lsb_rob_id == get_rob_id1) || (inst_valid && inst_ready && tail == get_rob_id1);
-    assign rob_value1 = ready[get_rob_id1] ? value[get_rob_id1] : (rs_ready && rs_rob_id == get_rob_id1) ? rs_value : (lsb_ready && lsb_rob_id == get_rob_id1) ? lsb_value : inst_value;
-    assign rob_value2_ready = ready[get_rob_id2] || (rs_ready && rs_rob_id == get_rob_id2) || (lsb_ready && lsb_rob_id == get_rob_id2) || (inst_valid && inst_ready && tail == get_rob_id2);
-    assign rob_value2 = ready[get_rob_id2] ? value[get_rob_id2] : (rs_ready && rs_rob_id == get_rob_id2) ? rs_value : (lsb_ready && lsb_rob_id == get_rob_id2) ? lsb_value : inst_value;
 endmodule

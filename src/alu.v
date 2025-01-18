@@ -1,17 +1,16 @@
 `include "const.v"
-module scalar_alu (
-    input wire clk_in,  // system clock signal
-    input wire rst_in,  // reset signal
-    input wire rdy_in,  // ready signal, pause cpu when low
-
+module alu (
+    input wire clk_in,
+    input wire rst_in,
+    input wire rdy_in,
     input wire                           valid,
-    input wire [   `RS_TYPE_BIT - 1 : 0] work_type,
+    input wire [`RS_TYPE_BIT - 1 : 0] work_type,
     input wire [                 31 : 0] r1,
     input wire [                 31 : 0] r2,
-    input wire [`ROB_WIDTH_BIT  - 1 : 0] inst_rob_id,
+    input wire [`ROB_BIT  - 1 : 0] inst_rob_id,
 
     output reg                           ready,
-    output reg [`ROB_WIDTH_BIT  - 1 : 0] rob_id,
+    output reg [`ROB_BIT  - 1 : 0] rob_id,
     output reg [                 31 : 0] value
 );
 

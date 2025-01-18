@@ -17,6 +17,16 @@ module MemoryController (
     output reg         ready,
     output wire [31:0] res
 );
+    reg         worked;
+    reg  [31:0] work_addr;
+    reg         work_wr;
+    reg  [ 2:0] work_len;
+    reg  [ 2:0] work_cycle;
+    reg  [31:0] current_addr;
+    reg  [ 7:0] current_data;
+    reg         current_wr;
+    reg  [31:0] result;
+    
     function [31:0] get_result;
         input [2:0] len;
         input [31:0] result;
@@ -30,24 +40,11 @@ module MemoryController (
             default: get_result = 0;
         endcase
     endfunction
-    reg         worked;
-    reg  [31:0] work_addr;
-    reg         work_wr;
-    reg  [ 2:0] work_len;
-    reg  [ 2:0] work_cycle;
-    reg  [31:0] current_addr;
-    reg  [ 7:0] current_data;
-    reg         current_wr;
-    reg  [31:0] result;
 
     wire        is_io_mapping = addr[17:16] == 2'b11;
     wire        able_to_write = !(is_io_mapping && wr && io_buffer_full);
-    // assign ready = worked && work_cycle == 0 && work_addr == addr && work_wr == wr && work_len == len;
     wire        need_work = valid && !ready && able_to_write;
 
-    // `direct` choose direct or inner value
-    // 0: direct, 1: inner
-    // direct means connect the input of this module to the input of Memory directyly
     wire        direct = work_cycle == 0 && need_work;
     assign mem_wr = direct ? wr : current_wr;
     assign mem_a = direct ? addr : current_addr;
@@ -89,8 +86,6 @@ module MemoryController (
                             end
                             else begin
                                 work_cycle   <= 3'b000;
-                                // special case: addr[17:16] == 2'b11
-                                // otherwise, keep addr
                                 current_addr <= addr[17:16] == 2'b11 ? 0 : addr;
                                 current_data <= 0;
                                 current_wr   <= 0;

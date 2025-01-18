@@ -67,11 +67,11 @@ module Cache (
         .ready(mc_ready),
         .res(mc_res)
     );
-    initial begin    
+/*    initial begin    
         $write("!!!\n");
         $display("This is a test.");
     end
-
+*/
     reg working;
     reg work_type;
 
